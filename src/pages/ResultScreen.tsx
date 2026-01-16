@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Printer, Share2 } from 'lucide-react';
+import { Printer, Share2, Camera } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { compareTwoStepWithAverage } from '../utils/evaluation';
 import { sendToGoogleSheets } from '../utils/google-sheets';
 
@@ -8,6 +9,8 @@ export default function ResultScreen() {
   const navigate = useNavigate();
   const [result, setResult] = useState<any>(null);
   const hasSentToSheets = useRef(false);
+  const resultContainerRef = useRef<HTMLDivElement>(null);
+  const [isSavingImage, setIsSavingImage] = useState(false);
 
   useEffect(() => {
     const resultStr = sessionStorage.getItem('checkResult');
@@ -110,6 +113,75 @@ export default function ResultScreen() {
   // スマホかどうかを判定
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+  // 画像として保存する機能
+  const handleSaveAsImage = async () => {
+    if (!resultContainerRef.current || isSavingImage) return;
+
+    setIsSavingImage(true);
+
+    try {
+      // スクロール位置を保存
+      const scrollY = window.scrollY;
+      window.scrollTo(0, 0);
+
+      // 少し待ってからキャプチャ
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const canvas = await html2canvas(resultContainerRef.current, {
+        backgroundColor: '#f3f4f6',
+        scale: 2, // 高解像度
+        useCORS: true,
+        logging: false,
+        windowWidth: resultContainerRef.current.scrollWidth,
+        windowHeight: resultContainerRef.current.scrollHeight,
+      });
+
+      // スクロール位置を復元
+      window.scrollTo(0, scrollY);
+
+      // Blob に変換
+      const blob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((b) => resolve(b!), 'image/png', 1.0);
+      });
+
+      // ファイル名を生成
+      const fileName = `ロコモチェック結果_${new Date().toLocaleDateString('ja-JP').replace(/\//g, '-')}.png`;
+
+      // Web Share API（ファイル共有）が使える場合
+      if (navigator.share && navigator.canShare) {
+        const file = new File([blob], fileName, { type: 'image/png' });
+        const shareData = { files: [file] };
+
+        if (navigator.canShare(shareData)) {
+          try {
+            await navigator.share(shareData);
+            setIsSavingImage(false);
+            return;
+          } catch (err) {
+            console.log('共有がキャンセルされました');
+          }
+        }
+      }
+
+      // フォールバック: ダウンロードリンクを作成
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      alert('画像を保存しました');
+    } catch (error) {
+      console.error('画像保存エラー:', error);
+      alert('画像の保存に失敗しました');
+    } finally {
+      setIsSavingImage(false);
+    }
+  };
+
   if (!result) {
     return <div>読み込み中...</div>;
   }
@@ -145,7 +217,7 @@ export default function ResultScreen() {
     <div className="result-screen">
       {/* 画面表示用 */}
       <div className="no-print">
-        <div className="container">
+        <div className="container" ref={resultContainerRef}>
           <div className="result-header">
             <h1>ロコモチェック結果</h1>
           </div>
@@ -547,6 +619,24 @@ export default function ResultScreen() {
               <>
                 <button
                   className="btn-primary"
+                  onClick={handleSaveAsImage}
+                  disabled={isSavingImage}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    padding: '1rem',
+                    fontSize: '1rem',
+                    width: '100%',
+                    backgroundColor: '#10b981'
+                  }}
+                >
+                  <Camera size={20} />
+                  {isSavingImage ? '保存中...' : '画像として保存'}
+                </button>
+                <button
+                  className="btn-primary"
                   onClick={handleShare}
                   style={{
                     display: 'flex',
@@ -559,7 +649,7 @@ export default function ResultScreen() {
                   }}
                 >
                   <Share2 size={20} />
-                  結果を共有・保存
+                  テキストで共有
                 </button>
                 <button
                   className="btn-secondary"
