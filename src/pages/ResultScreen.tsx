@@ -555,7 +555,6 @@ export default function ResultScreen() {
                 </h4>
                 <p style={{lineHeight: '1.8'}}>
                   • 運動中に痛みが出た場合は中止してください<br />
-                  • 膝や腰に不安がある方は、医師に相談してから実施してください<br />
                   • 定期的に（3～6ヶ月ごとに）ロコモチェックを行い、改善を確認しましょう
                 </p>
                 <p style={{marginTop: '1rem', fontSize: '0.9rem', color: '#6b7280'}}>
@@ -569,7 +568,7 @@ export default function ResultScreen() {
             {result.evaluation.total_risk === 'ロコモ度2' && (
               <div>
                 <p style={{marginBottom: '1rem', lineHeight: '1.8', color: '#f97316'}}>
-                  <strong>ロコモ度2:</strong> 運動器機能が低下しています。転倒や骨折のリスクが高まっている可能性があります。自立した生活を送るために、積極的にロコトレを実施しましょう。
+                  <strong>ロコモ度2:</strong> 運動器機能が低下しています。自立した生活を送るために、積極的にロコトレを実施しましょう。
                 </p>
                 <h4 style={{fontSize: '1.1rem', marginTop: '1.5rem', marginBottom: '0.5rem', color: '#059669'}}>
                   推奨されるロコトレ（段階的に）
@@ -581,13 +580,12 @@ export default function ResultScreen() {
                   <li><strong>歩行練習</strong>: 安全な場所で毎日10～15分程度のウォーキング</li>
                 </ul>
                 <h4 style={{fontSize: '1.1rem', marginTop: '1.5rem', marginBottom: '0.5rem', color: '#dc2626'}}>
-                  重要な注意点
+                  注意点
                 </h4>
                 <p style={{lineHeight: '1.8'}}>
-                  • <strong>医療機関への相談を推奨します</strong>。整形外科やリハビリテーション科で専門的な指導を受けることが望ましいです<br />
                   • 無理な運動は避け、痛みが出たらすぐに中止してください<br />
-                  • 転倒防止のため、自宅環境の見直しも重要です（段差の解消、手すりの設置など）<br />
-                  • 栄養状態の改善も重要です（タンパク質、カルシウム、ビタミンDの摂取）
+                  • 転倒防止のため、手すりや杖を活用しましょう<br />
+                  • バランスの良い食事を心がけましょう（タンパク質、カルシウム、ビタミンDなど）
                 </p>
                 <p style={{marginTop: '1rem', fontSize: '0.9rem', color: '#6b7280'}}>
                   出典: 日本整形外科学会「ロコモティブシンドローム予防啓発公式サイト」<br />
@@ -600,37 +598,23 @@ export default function ResultScreen() {
             {result.evaluation.total_risk === 'ロコモ度3' && (
               <div>
                 <p style={{marginBottom: '1rem', lineHeight: '1.8', color: '#dc2626'}}>
-                  <strong>ロコモ度3:</strong> 運動器機能が著しく低下しています。社会参加や自立した生活に支障が出る可能性が高い状態です。<strong style={{fontSize: '1.1rem'}}>速やかに医療機関（整形外科）を受診してください。</strong>
+                  <strong>ロコモ度3:</strong> 運動器機能が著しく低下しています。社会参加や自立した生活に支障が出る可能性が高い状態です。
                 </p>
-                <h4 style={{fontSize: '1.1rem', marginTop: '1.5rem', marginBottom: '0.5rem', color: '#dc2626'}}>
-                  医療機関での相談が必要です
-                </h4>
-                <p style={{lineHeight: '1.8'}}>
-                  整形外科やリハビリテーション科で以下を相談してください：
-                </p>
-                <ul style={{lineHeight: '1.8', marginLeft: '1.5rem'}}>
-                  <li>現在の運動器の状態の詳細な評価</li>
-                  <li>個別のリハビリテーションプログラムの作成</li>
-                  <li>必要に応じた治療（薬物療法、装具療法など）</li>
-                  <li>日常生活動作（ADL）の改善指導</li>
-                  <li>転倒予防対策</li>
-                </ul>
                 <h4 style={{fontSize: '1.1rem', marginTop: '1.5rem', marginBottom: '0.5rem', color: '#059669'}}>
-                  自宅でできる安全な運動（医師の指導下で）
+                  自宅でできる安全な運動
                 </h4>
                 <ul style={{lineHeight: '1.8', marginLeft: '1.5rem'}}>
                   <li><strong>座位での運動</strong>: 椅子に座ったまま足首や膝を動かす</li>
                   <li><strong>ベッド上での運動</strong>: 寝た状態で足を動かす、膝を曲げ伸ばしする</li>
-                  <li><strong>歩行器を使った歩行練習</strong>: 理学療法士の指導のもとで実施</li>
+                  <li><strong>歩行練習</strong>: 安全な場所でゆっくりと歩く練習</li>
                 </ul>
                 <h4 style={{fontSize: '1.1rem', marginTop: '1.5rem', marginBottom: '0.5rem', color: '#dc2626'}}>
-                  重要な注意事項
+                  注意事項
                 </h4>
                 <p style={{lineHeight: '1.8'}}>
-                  • 自己判断での運動は危険です。必ず医師や理学療法士の指導を受けてください<br />
-                  • 介護保険サービスの利用も検討しましょう（65歳以上または特定疾病該当者）<br />
-                  • 転倒防止が最優先です。自宅環境の改善、見守りサービスの利用を検討してください<br />
-                  • 栄養管理が重要です。必要に応じて管理栄養士の指導を受けましょう
+                  • 自己判断での無理な運動は避けましょう<br />
+                  • 転倒防止が大切です。手すりや杖を活用しましょう<br />
+                  • バランスの良い食事を心がけましょう（タンパク質、カルシウム、ビタミンDなど）
                 </p>
                 <p style={{marginTop: '1rem', fontSize: '0.9rem', color: '#6b7280'}}>
                   出典: 日本整形外科学会「ロコモティブシンドローム予防啓発公式サイト」<br />
