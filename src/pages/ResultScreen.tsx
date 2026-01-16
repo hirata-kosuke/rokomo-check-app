@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Printer } from 'lucide-react';
 import { compareTwoStepWithAverage } from '../utils/evaluation';
+import { sendToGoogleSheets } from '../utils/google-sheets';
 
 export default function ResultScreen() {
   const navigate = useNavigate();
   const [result, setResult] = useState<any>(null);
+  const hasSentToSheets = useRef(false);
 
   useEffect(() => {
     const resultStr = sessionStorage.getItem('checkResult');
@@ -14,7 +16,59 @@ export default function ResultScreen() {
       return;
     }
 
-    setResult(JSON.parse(resultStr));
+    const parsedResult = JSON.parse(resultStr);
+    setResult(parsedResult);
+
+    // Google Sheetsにデータを送信（1回のみ）
+    if (!hasSentToSheets.current) {
+      hasSentToSheets.current = true;
+
+      // ロコモ25の各回答をマッピング
+      const rokomoCheck: Record<string, number> = {};
+      if (parsedResult.locomo25Answers) {
+        Object.entries(parsedResult.locomo25Answers).forEach(([key, value]) => {
+          rokomoCheck[key] = value as number;
+        });
+      }
+
+      // Google Sheetsに送信するデータ
+      const sheetData = {
+        basicInfo: {
+          name: parsedResult.basicInfo?.name || '',
+          age: parsedResult.basicInfo?.age || 0,
+          gender: parsedResult.basicInfo?.gender || 'male',
+        },
+        rokomoCheck,
+        standingTest: {
+          both40cm: parsedResult.standingTest?.bothLegs40cm,
+          both30cm: parsedResult.standingTest?.bothLegs30cm,
+          both20cm: parsedResult.standingTest?.bothLegs20cm,
+          both10cm: parsedResult.standingTest?.bothLegs10cm,
+          single40cm: parsedResult.standingTest?.oneLeg40cm,
+          single30cm: parsedResult.standingTest?.oneLeg30cm,
+          single20cm: parsedResult.standingTest?.oneLeg20cm,
+          single10cm: parsedResult.standingTest?.oneLeg10cm,
+        },
+        twoStepTest: {
+          twoStepValue: parsedResult.twoStepTest?.score,
+        },
+        result: {
+          locomo25Score: parsedResult.locomo25Total || 0,
+          standingLevel: `レベル${parsedResult.evaluation?.standing_risk_level}`,
+          twoStepLevel: `レベル${parsedResult.evaluation?.two_step_risk_level}`,
+          rokomoLevel: Math.max(
+            parsedResult.evaluation?.standing_risk_level || 0,
+            parsedResult.evaluation?.two_step_risk_level || 0,
+            parsedResult.evaluation?.locomo25_risk_level || 0
+          ),
+          details: parsedResult.evaluation?.total_risk || '',
+        },
+      };
+
+      sendToGoogleSheets(sheetData).catch(err => {
+        console.error('Google Sheets送信エラー:', err);
+      });
+    }
   }, [navigate]);
 
   const handlePrint = () => {
