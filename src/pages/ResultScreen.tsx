@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Printer } from 'lucide-react';
+import { Printer, Share2 } from 'lucide-react';
 import { compareTwoStepWithAverage } from '../utils/evaluation';
 import { sendToGoogleSheets } from '../utils/google-sheets';
 
@@ -75,6 +75,41 @@ export default function ResultScreen() {
     window.print();
   };
 
+  // スマホ用の共有機能
+  const handleShare = async () => {
+    if (!result) return;
+
+    const shareText = `【ロコモチェック結果】
+総合判定: ${result.evaluation.total_risk}
+- 立ち上がりテスト: ${getRiskLevelText(result.evaluation.standing_risk_level)}
+- 2ステップテスト: ${getRiskLevelText(result.evaluation.two_step_risk_level)}
+- ロコモ25: ${getRiskLevelText(result.evaluation.locomo25_risk_level)}
+
+チェック日時: ${new Date().toLocaleString('ja-JP')}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'ロコモチェック結果',
+          text: shareText,
+        });
+      } catch (err) {
+        console.log('共有がキャンセルされました');
+      }
+    } else {
+      // Web Share APIが使えない場合はクリップボードにコピー
+      try {
+        await navigator.clipboard.writeText(shareText);
+        alert('結果をクリップボードにコピーしました');
+      } catch (err) {
+        alert('コピーに失敗しました');
+      }
+    }
+  };
+
+  // スマホかどうかを判定
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   if (!result) {
     return <div>読み込み中...</div>;
   }
@@ -119,8 +154,8 @@ export default function ResultScreen() {
           <div style={{
             backgroundColor: '#fff',
             borderRadius: '12px',
-            padding: '2rem',
-            marginBottom: '2rem',
+            padding: isMobile ? '1.5rem' : '2rem',
+            marginBottom: '1.5rem',
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
             border: `4px solid ${getScoreColor(
               Math.max(
@@ -131,9 +166,9 @@ export default function ResultScreen() {
             )}`
           }}>
             <div style={{textAlign: 'center'}}>
-              <h2 style={{fontSize: '1.5rem', marginBottom: '1rem', color: '#1f2937'}}>総合判定</h2>
+              <h2 style={{fontSize: isMobile ? '1.2rem' : '1.5rem', marginBottom: '0.75rem', color: '#1f2937'}}>総合判定</h2>
               <div style={{
-                fontSize: '3rem',
+                fontSize: isMobile ? '2rem' : '3rem',
                 fontWeight: 'bold',
                 color: getScoreColor(
                   Math.max(
@@ -142,47 +177,47 @@ export default function ResultScreen() {
                     result.evaluation.locomo25_risk_level
                   )
                 ),
-                marginBottom: '1rem'
+                marginBottom: '0.75rem'
               }}>
                 {result.evaluation.total_risk}
               </div>
               {result.evaluation.total_risk === 'なし' ? (
-                <p style={{fontSize: '1.2rem', color: '#10b981'}}>
+                <p style={{fontSize: isMobile ? '0.95rem' : '1.2rem', color: '#10b981', lineHeight: '1.6'}}>
                   ✅ 運動器の状態は良好です。この状態を維持しましょう。
                 </p>
               ) : (
-                <p style={{fontSize: '1.2rem', color: '#ef4444'}}>
+                <p style={{fontSize: isMobile ? '0.95rem' : '1.2rem', color: '#ef4444', lineHeight: '1.6'}}>
                   ⚠️ 運動器機能の低下が見られます。適切な運動やケアを検討しましょう。
                 </p>
               )}
             </div>
           </div>
 
-          {/* 3つの評価をボックス形式で横並び表示 */}
+          {/* 3つの評価をボックス形式で表示（スマホでは縦並び） */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '1.5rem',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+            gap: '1rem',
             marginBottom: '2rem'
           }}>
             {/* 立ち上がりテスト */}
             <div style={{
               backgroundColor: '#fff',
               borderRadius: '12px',
-              padding: '1.5rem',
+              padding: isMobile ? '1rem' : '1.5rem',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               borderTop: `6px solid ${getScoreColor(result.evaluation.standing_risk_level)}`
             }}>
-              <h3 style={{fontSize: '1.1rem', marginBottom: '1rem', color: '#4F46E5'}}>立ち上がりテスト</h3>
+              <h3 style={{fontSize: isMobile ? '1rem' : '1.1rem', marginBottom: '0.5rem', color: '#4F46E5'}}>立ち上がりテスト</h3>
               <div style={{
-                fontSize: '2.5rem',
+                fontSize: isMobile ? '1.8rem' : '2.5rem',
                 fontWeight: 'bold',
                 color: getScoreColor(result.evaluation.standing_risk_level),
-                marginBottom: '0.5rem'
+                marginBottom: '0.25rem'
               }}>
                 {getRiskLevelText(result.evaluation.standing_risk_level)}
               </div>
-              <div style={{fontSize: '0.9rem', color: '#6b7280'}}>
+              <div style={{fontSize: '0.85rem', color: '#6b7280'}}>
                 リスクレベル: {result.evaluation.standing_risk_level}
               </div>
             </div>
@@ -191,20 +226,20 @@ export default function ResultScreen() {
             <div style={{
               backgroundColor: '#fff',
               borderRadius: '12px',
-              padding: '1.5rem',
+              padding: isMobile ? '1rem' : '1.5rem',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               borderTop: `6px solid ${getScoreColor(result.evaluation.two_step_risk_level)}`
             }}>
-              <h3 style={{fontSize: '1.1rem', marginBottom: '1rem', color: '#7C3AED'}}>2ステップテスト</h3>
+              <h3 style={{fontSize: isMobile ? '1rem' : '1.1rem', marginBottom: '0.5rem', color: '#7C3AED'}}>2ステップテスト</h3>
               <div style={{
-                fontSize: '2.5rem',
+                fontSize: isMobile ? '1.8rem' : '2.5rem',
                 fontWeight: 'bold',
                 color: getScoreColor(result.evaluation.two_step_risk_level),
-                marginBottom: '0.5rem'
+                marginBottom: '0.25rem'
               }}>
                 {getRiskLevelText(result.evaluation.two_step_risk_level)}
               </div>
-              <div style={{fontSize: '0.9rem', color: '#6b7280'}}>
+              <div style={{fontSize: '0.85rem', color: '#6b7280'}}>
                 スコア: {result.twoStepTest.score.toFixed(2)}
               </div>
               {(() => {
@@ -231,20 +266,20 @@ export default function ResultScreen() {
             <div style={{
               backgroundColor: '#fff',
               borderRadius: '12px',
-              padding: '1.5rem',
+              padding: isMobile ? '1rem' : '1.5rem',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               borderTop: `6px solid ${getScoreColor(result.evaluation.locomo25_risk_level)}`
             }}>
-              <h3 style={{fontSize: '1.1rem', marginBottom: '1rem', color: '#059669'}}>ロコモ25</h3>
+              <h3 style={{fontSize: isMobile ? '1rem' : '1.1rem', marginBottom: '0.5rem', color: '#059669'}}>ロコモ25</h3>
               <div style={{
-                fontSize: '2.5rem',
+                fontSize: isMobile ? '1.8rem' : '2.5rem',
                 fontWeight: 'bold',
                 color: getScoreColor(result.evaluation.locomo25_risk_level),
-                marginBottom: '0.5rem'
+                marginBottom: '0.25rem'
               }}>
                 {getRiskLevelText(result.evaluation.locomo25_risk_level)}
               </div>
-              <div style={{fontSize: '0.9rem', color: '#6b7280'}}>
+              <div style={{fontSize: '0.85rem', color: '#6b7280'}}>
                 合計スコア: {result.locomo25Total} 点
               </div>
             </div>
@@ -502,12 +537,62 @@ export default function ResultScreen() {
             )}
           </div>
 
-          <div className="result-actions">
-            <button className="btn-primary" onClick={handlePrint}>
-              <Printer size={20} />
-              印刷する
-            </button>
-            <button className="btn-secondary" onClick={() => navigate('/')}>
+          <div className="result-actions" style={{
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: '0.75rem',
+            marginTop: '1.5rem'
+          }}>
+            {isMobile ? (
+              <>
+                <button
+                  className="btn-primary"
+                  onClick={handleShare}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    padding: '1rem',
+                    fontSize: '1rem',
+                    width: '100%'
+                  }}
+                >
+                  <Share2 size={20} />
+                  結果を共有・保存
+                </button>
+                <button
+                  className="btn-secondary"
+                  onClick={handlePrint}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    padding: '1rem',
+                    fontSize: '1rem',
+                    width: '100%'
+                  }}
+                >
+                  <Printer size={20} />
+                  印刷 / PDF保存
+                </button>
+              </>
+            ) : (
+              <button className="btn-primary" onClick={handlePrint}>
+                <Printer size={20} />
+                印刷する
+              </button>
+            )}
+            <button
+              className="btn-secondary"
+              onClick={() => navigate('/')}
+              style={isMobile ? {
+                padding: '1rem',
+                fontSize: '1rem',
+                width: '100%'
+              } : {}}
+            >
               ホームに戻る
             </button>
           </div>
