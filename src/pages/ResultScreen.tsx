@@ -113,7 +113,7 @@ export default function ResultScreen() {
   // スマホかどうかを判定
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-  // 画像として保存する機能
+  // 画像として保存する機能（カメラロール/写真アプリに保存）
   const handleSaveAsImage = async () => {
     if (!resultContainerRef.current || isSavingImage) return;
 
@@ -146,34 +146,67 @@ export default function ResultScreen() {
 
       // ファイル名を生成
       const fileName = `ロコモチェック結果_${new Date().toLocaleDateString('ja-JP').replace(/\//g, '-')}.png`;
+      const file = new File([blob], fileName, { type: 'image/png' });
 
-      // Web Share API（ファイル共有）が使える場合
-      if (navigator.share && navigator.canShare) {
-        const file = new File([blob], fileName, { type: 'image/png' });
-        const shareData = { files: [file] };
-
-        if (navigator.canShare(shareData)) {
-          try {
-            await navigator.share(shareData);
+      // Web Share API でファイル共有（写真アプリに保存可能）
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'ロコモチェック結果',
+            text: '結果を画像として保存'
+          });
+          setIsSavingImage(false);
+          return;
+        } catch (err: unknown) {
+          // ユーザーがキャンセルした場合
+          if (err instanceof Error && err.name === 'AbortError') {
             setIsSavingImage(false);
             return;
-          } catch (err) {
-            console.log('共有がキャンセルされました');
           }
+          console.log('共有に失敗、フォールバックを使用');
         }
       }
 
-      // フォールバック: ダウンロードリンクを作成
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // フォールバック: 画像を新しいタブで開く（長押しで保存可能）
+      const dataUrl = canvas.toDataURL('image/png');
 
-      alert('画像を保存しました');
+      // iOSの場合は新しいウィンドウで画像を開く（長押しで保存できる）
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        const newWindow = window.open();
+        if (newWindow) {
+          newWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <title>ロコモチェック結果</title>
+              <style>
+                body { margin: 0; padding: 20px; background: #f3f4f6; text-align: center; }
+                img { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                p { color: #374151; font-family: sans-serif; margin-top: 20px; font-size: 16px; }
+              </style>
+            </head>
+            <body>
+              <p>📱 画像を長押しして「写真に追加」を選択してください</p>
+              <img src="${dataUrl}" alt="ロコモチェック結果" />
+            </body>
+            </html>
+          `);
+          newWindow.document.close();
+        }
+      } else {
+        // Androidの場合はダウンロード
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('画像をダウンロードしました。ダウンロードフォルダを確認してください。');
+      }
     } catch (error) {
       console.error('画像保存エラー:', error);
       alert('画像の保存に失敗しました');
